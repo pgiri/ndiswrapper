@@ -358,6 +358,10 @@ static inline void reinit_completion(struct completion *x)
 #define prandom_seed(seed) net_srandom(seed)
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,0,0)
+#define strncasecmp strnicmp
+#endif
+
 /* TICK is 100ns */
 #define TICKSPERSEC		10000000
 #define TICKSPERMSEC		10000

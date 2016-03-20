@@ -16,6 +16,10 @@
 #ifndef _LOADER_H_
 #define _LOADER_H_
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4,0,0)
+#include <linux/vmalloc.h>
+#endif
+
 #include "ndiswrapper.h"
 
 #ifndef __KERNEL__
