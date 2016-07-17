@@ -360,8 +360,11 @@ static inline void reinit_completion(struct completion *x)
 #define prandom_seed(seed) net_srandom(seed)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,0,0)
-#define strncasecmp strnicmp
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,22)
+static int strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	strnicmp(s1, s2, n);
+}
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,7,0)
