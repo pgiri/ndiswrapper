@@ -1,0 +1,11 @@
+*.ko
+*.mod.c
+*.o
+.*.cmd
+*_exports.h
+/.tmp_versions/
+/Module.markers
+/Module.symvers
+/modules.order
+/ndis_exports.h
+/win2lin_stubs.h
