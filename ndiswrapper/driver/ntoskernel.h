@@ -46,10 +46,8 @@
 #include <linux/percpu.h>
 #include <linux/kthread.h>
 #include <linux/workqueue.h>
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4,0,0)
 #include <linux/vmalloc.h>
-#endif
+
 
 #if !defined(CONFIG_X86) && !defined(CONFIG_X86_64)
 #error "this module is for x86 or x86_64 architectures only"
