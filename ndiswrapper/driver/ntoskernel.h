@@ -366,6 +366,13 @@ static inline void reinit_completion(struct completion *x)
 #define strncasecmp strnicmp
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,7,0)
+static inline void netif_trans_update(struct net_device *dev)
+{
+	dev->trans_start = jiffies;
+}
+#endif
+
 /* TICK is 100ns */
 #define TICKSPERSEC		10000000
 #define TICKSPERMSEC		10000

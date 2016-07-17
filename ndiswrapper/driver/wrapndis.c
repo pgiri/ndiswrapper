@@ -704,7 +704,7 @@ static void tx_worker(struct work_struct *work)
 			n = wnd->max_tx_packets;
 		n = mp_tx_packets(wnd, wnd->tx_ring_start, n);
 		if (n) {
-			wnd->net_dev->trans_start = jiffies;
+			netif_trans_update(wnd->net_dev);
 			wnd->tx_ring_start =
 				(wnd->tx_ring_start + n) % TX_RING_SIZE;
 			wnd->is_tx_ring_full = 0;
