@@ -46,10 +46,8 @@
 #include <linux/percpu.h>
 #include <linux/kthread.h>
 #include <linux/workqueue.h>
-
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4,0,0)
 #include <linux/vmalloc.h>
-#endif
+
 
 #if !defined(CONFIG_X86) && !defined(CONFIG_X86_64)
 #error "this module is for x86 or x86_64 architectures only"
@@ -362,8 +360,18 @@ static inline void reinit_completion(struct completion *x)
 #define prandom_seed(seed) net_srandom(seed)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,0,0)
-#define strncasecmp strnicmp
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,22)
+static int strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	strnicmp(s1, s2, n);
+}
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,7,0)
+static inline void netif_trans_update(struct net_device *dev)
+{
+	dev->trans_start = jiffies;
+}
 #endif
 
 /* TICK is 100ns */
