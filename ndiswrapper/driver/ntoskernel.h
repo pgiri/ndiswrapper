@@ -296,6 +296,10 @@ static inline void (INIT_WORK)(struct work_struct *work, work_func_t func)
 #define add_taint(flag, lockdep_ok) add_taint(flag)
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#include <linux/sched/signal.h>
+#endif
+
 #include "winnt_types.h"
 #include "ndiswrapper.h"
 #include "pe_linker.h"

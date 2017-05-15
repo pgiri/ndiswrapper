@@ -2258,7 +2258,9 @@ wstdcall void NdisMIndicateReceivePacket(struct ndis_mp_block *nmb,
 			WARNING("empty packet ignored");
 			continue;
 		}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 		wnd->net_dev->last_rx = jiffies;
+#endif
 		/* get total number of bytes in packet */
 		NdisGetFirstBufferFromPacketSafe(packet, &buffer, &virt,
 						 &length, &total_length,
@@ -2346,7 +2348,9 @@ wstdcall void EthRxIndicateHandler(struct ndis_mp_block *nmb, void *rx_ctx,
 		ERROR("nmb is NULL");
 		EXIT3(return);
 	}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 	wnd->net_dev->last_rx = jiffies;
+#endif
 
 	if (look_ahead_size < packet_size) {
 		struct ndis_packet *packet;
@@ -2461,7 +2465,9 @@ wstdcall void NdisMTransferDataComplete(struct ndis_mp_block *nmb,
 		WARNING("illegal packet");
 		EXIT3(return);
 	}
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 	wnd->net_dev->last_rx = jiffies;
+#endif
 	oob_data = NDIS_PACKET_OOB_DATA(packet);
 	skb_size = sizeof(oob_data->header) + oob_data->look_ahead_size +
 		bytes_txed;
