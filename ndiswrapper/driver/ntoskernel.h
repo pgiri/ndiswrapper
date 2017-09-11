@@ -119,9 +119,16 @@ static cpumask_t cpumasks[NR_CPUS];
  */
 #include <asm/dma-mapping.h>
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 #define PCI_DMA_ALLOC_COHERENT(pci_dev,size,dma_handle)			\
 	dma_alloc_coherent(&pci_dev->dev,size,dma_handle,		\
 			   GFP_KERNEL | __GFP_REPEAT)
+#else
+#define PCI_DMA_ALLOC_COHERENT(pci_dev,size,dma_handle)			\
+	dma_alloc_coherent(&pci_dev->dev,size,dma_handle,		\
+			   GFP_KERNEL | __GFP_RETRY_MAYFAIL)
+#endif
+
 #define PCI_DMA_FREE_COHERENT(pci_dev,size,cpu_addr,dma_handle)		\
 	dma_free_coherent(&pci_dev->dev,size,cpu_addr,dma_handle)
 #define PCI_DMA_MAP_SINGLE(pci_dev,addr,size,direction)		\
