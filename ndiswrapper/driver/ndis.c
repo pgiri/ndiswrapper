@@ -2258,7 +2258,7 @@ wstdcall void NdisMIndicateReceivePacket(struct ndis_mp_block *nmb,
 			WARNING("empty packet ignored");
 			continue;
 		}
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4,11,0)
 		wnd->net_dev->last_rx = jiffies;
 #endif
 		/* get total number of bytes in packet */
@@ -2348,7 +2348,7 @@ wstdcall void EthRxIndicateHandler(struct ndis_mp_block *nmb, void *rx_ctx,
 		ERROR("nmb is NULL");
 		EXIT3(return);
 	}
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4,11,0)
 	wnd->net_dev->last_rx = jiffies;
 #endif
 
@@ -2465,7 +2465,7 @@ wstdcall void NdisMTransferDataComplete(struct ndis_mp_block *nmb,
 		WARNING("illegal packet");
 		EXIT3(return);
 	}
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4,11,0)
 	wnd->net_dev->last_rx = jiffies;
 #endif
 	oob_data = NDIS_PACKET_OOB_DATA(packet);

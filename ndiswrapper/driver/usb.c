@@ -776,8 +776,13 @@ static USBD_STATUS wrap_get_status_request(struct usb_device *udev,
 		return NT_URB_STATUS(nt_urb);
 	}
 	assert(status_req->transfer_buffer_length == sizeof(u16));
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	ret = usb_get_std_status(udev, type, status_req->index,
+			         status_req->transfer_buffer);
+#else
 	ret = usb_get_status(udev, type, status_req->index,
 			     status_req->transfer_buffer);
+#endif
 	if (ret >= 0) {
 		assert(ret <= status_req->transfer_buffer_length);
 		status_req->transfer_buffer_length = ret;

@@ -1,3 +1,7 @@
+Version 1.62 2018-11-04
+=======================
+* Added support for Linux kernels up to 4.18
+
 Version 1.61 2016-10-09
 =======================
 * Added support for Linux kernels up to 4.8

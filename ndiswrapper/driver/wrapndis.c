@@ -1089,9 +1089,17 @@ send_assoc_event:
 	EXIT2(return);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void iw_stats_timer_proc(struct timer_list *tl)
+#else
 static void iw_stats_timer_proc(unsigned long data)
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	struct ndis_device *wnd = from_timer(wnd, tl, iw_stats_timer);
+#else
 	struct ndis_device *wnd = (struct ndis_device *)data;
+#endif
 
 	ENTER2("%d", wnd->iw_stats_interval);
 	if (wnd->iw_stats_interval > 0) {
@@ -1107,8 +1115,12 @@ static void add_iw_stats_timer(struct ndis_device *wnd)
 		return;
 	if (wnd->iw_stats_interval < 0)
 		wnd->iw_stats_interval *= -1;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	timer_setup(&wnd->iw_stats_timer, iw_stats_timer_proc, 0);
+#else
 	wnd->iw_stats_timer.data = (unsigned long)wnd;
 	wnd->iw_stats_timer.function = iw_stats_timer_proc;
+#endif
 	mod_timer(&wnd->iw_stats_timer, jiffies + wnd->iw_stats_interval);
 }
 
@@ -1120,9 +1132,17 @@ static void del_iw_stats_timer(struct ndis_device *wnd)
 	EXIT2(return);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void hangcheck_proc(struct timer_list *tl)
+#else
 static void hangcheck_proc(unsigned long data)
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	struct ndis_device *wnd = from_timer(wnd, tl, hangcheck_timer);
+#else
 	struct ndis_device *wnd = (struct ndis_device *)data;
+#endif
 
 	ENTER3("%d", wnd->hangcheck_interval);
 	if (wnd->hangcheck_interval > 0) {
@@ -1143,8 +1163,12 @@ void hangcheck_add(struct ndis_device *wnd)
 		wnd->hangcheck_interval = hangcheck_interval * HZ;
 	if (wnd->hangcheck_interval < 0)
 		wnd->hangcheck_interval *= -1;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	timer_setup(&wnd->hangcheck_timer, hangcheck_proc, 0);
+#else
 	wnd->hangcheck_timer.data = (unsigned long)wnd;
 	wnd->hangcheck_timer.function = hangcheck_proc;
+#endif
 	mod_timer(&wnd->hangcheck_timer, jiffies + wnd->hangcheck_interval);
 	EXIT2(return);
 }
@@ -2134,9 +2158,14 @@ static NTSTATUS ndis_add_device(struct driver_object *drv_obj,
 	wnd->dma_map_count = 0;
 	wnd->dma_map_addr = NULL;
 	wnd->nick[0] = 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	timer_setup(&wnd->hangcheck_timer, hangcheck_proc, 0);
+	timer_setup(&wnd->iw_stats_timer, hangcheck_proc, 0);
+#else
 	init_timer(&wnd->hangcheck_timer);
-	wnd->scan_timestamp = 0;
 	init_timer(&wnd->iw_stats_timer);
+#endif
+	wnd->scan_timestamp = 0;
 	wnd->iw_stats_interval = 10 * HZ;
 	wnd->ndis_pending_work = 0;
 	memset(&wnd->essid, 0, sizeof(wnd->essid));

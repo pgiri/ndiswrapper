@@ -77,7 +77,7 @@ u64 wrap_ticks_to_boot;
 #if defined(CONFIG_X86_64)
 static struct timer_list shared_data_timer;
 struct kuser_shared_data kuser_shared_data;
-static void update_user_shared_data_proc(unsigned long data);
+/* static void update_user_shared_data_proc(unsigned long data); */
 #endif
 
 WIN_SYMBOL_MAP("KeTickCount", &jiffies)
@@ -91,7 +91,11 @@ DEFINE_PER_CPU(struct irql_info, irql_info);
 #endif
 
 #if defined(CONFIG_X86_64)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void update_user_shared_data_proc(struct timer_list *tl)
+#else
 static void update_user_shared_data_proc(unsigned long data)
+#endif
 {
 	/* timer is supposed to be scheduled every 10ms, but bigger
 	 * intervals seem to work (tried up to 50ms) */
@@ -407,9 +411,17 @@ static void initialize_object(struct dispatcher_header *dh, enum dh_type type,
 	InitializeListHead(&dh->wait_blocks);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+static void timer_proc(struct timer_list *tl)
+#else
 static void timer_proc(unsigned long data)
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+	struct wrap_timer *wrap_timer = from_timer(wrap_timer, tl, timer);
+#else
 	struct wrap_timer *wrap_timer = (struct wrap_timer *)data;
+#endif
 	struct nt_timer *nt_timer;
 	struct kdpc *kdpc;
 
@@ -452,9 +464,13 @@ void wrap_init_timer(struct nt_timer *nt_timer, enum timer_type type,
 		return;
 	}
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
 	init_timer(&wrap_timer->timer);
-	wrap_timer->timer.data = (unsigned long)wrap_timer;
 	wrap_timer->timer.function = timer_proc;
+	wrap_timer->timer.data = (unsigned long)wrap_timer;
+#else
+	timer_setup(&wrap_timer->timer, timer_proc, 0);
+#endif
 	wrap_timer->nt_timer = nt_timer;
 #ifdef TIMER_DEBUG
 	wrap_timer->wrap_timer_magic = WRAP_TIMER_MAGIC;
@@ -2559,9 +2575,13 @@ int ntoskernel_init(void)
 #if defined(CONFIG_X86_64)
 	memset(&kuser_shared_data, 0, sizeof(kuser_shared_data));
 	*((ULONG64 *)&kuser_shared_data.system_time) = ticks_1601();
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
 	init_timer(&shared_data_timer);
 	shared_data_timer.function = update_user_shared_data_proc;
 	shared_data_timer.data = 0;
+#else
+	timer_setup(&shared_data_timer, update_user_shared_data_proc, 0);
+#endif
 #endif
 	return 0;
 }
