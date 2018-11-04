@@ -1074,7 +1074,7 @@ static char *ndis_translate_scan(struct net_device *dev,
 	/* add protocol name */
 	memset(&iwe, 0, sizeof(iwe));
 	iwe.cmd = SIOCGIWNAME;
-	strncpy(iwe.u.name, network_type_to_name(bssid->net_type), IFNAMSIZ);
+	strncpy(iwe.u.name, network_type_to_name(bssid->net_type), IFNAMSIZ - 1);
 	ret = iwe_stream_add_event(info, event, end_buf, &iwe, IW_EV_CHAR_LEN);
 	if (ret == event)
 		return NULL;
