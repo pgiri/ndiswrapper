@@ -2501,7 +2501,11 @@ struct worker_init_struct {
 
 int ntoskernel_init(void)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
 	struct timeval now;
+#else
+	ktime_t now;
+#endif
 
 	spin_lock_init(&dispatcher_lock);
 	spin_lock_init(&ntoskernel_lock);
@@ -2521,10 +2525,16 @@ int ntoskernel_init(void)
 	INIT_WORK(&ntos_work, ntos_work_worker);
 	wrap_timer_slist.next = NULL;
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
 	do_gettimeofday(&now);
 	wrap_ticks_to_boot = TICKS_1601_TO_1970;
 	wrap_ticks_to_boot += (u64)now.tv_sec * TICKSPERSEC;
 	wrap_ticks_to_boot += now.tv_usec * 10;
+#else
+	now = ktime_get_real();
+	wrap_ticks_to_boot = TICKS_1601_TO_1970;
+	wrap_ticks_to_boot += ktime_to_us(now) * 10;
+#endif
 	wrap_ticks_to_boot -= jiffies * TICKSPERJIFFY;
 	TRACE2("%llu", wrap_ticks_to_boot);
 
