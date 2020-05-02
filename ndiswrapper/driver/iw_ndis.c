@@ -700,6 +700,7 @@ int set_ndis_auth_mode(struct ndis_device *wnd, ULONG auth_mode)
 	case Ndis802_11AuthModeWPAPSK:
 		wnd->iw_auth_wpa_version = IW_AUTH_WPA_VERSION_WPA;
 		wnd->iw_auth_key_mgmt = IW_AUTH_KEY_MGMT_PSK;
+        break;
 	case Ndis802_11AuthModeWPANone:
 		wnd->iw_auth_wpa_version = IW_AUTH_WPA_VERSION_DISABLED;
 		wnd->iw_auth_key_mgmt = IW_AUTH_KEY_MGMT_PSK;
