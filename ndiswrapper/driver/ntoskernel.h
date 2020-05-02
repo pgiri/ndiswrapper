@@ -110,7 +110,11 @@ static cpumask_t cpumasks[NR_CPUS];
 #endif /* CONFIG_SMP */
 
 #ifndef tsk_cpus_allowed
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0)
+#define tsk_cpus_allowed(tsk) (&(tsk)->cpus_mask)
+#else
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
+#endif
 #endif
 
 #ifndef __packed
