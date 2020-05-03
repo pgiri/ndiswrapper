@@ -14,6 +14,7 @@
  */
 
 #include <linux/linkage.h>
+#include <linux/version.h>
 
 #ifdef CONFIG_X86_64
 
@@ -141,8 +142,12 @@ In Linux it should look like:
 
 /* Declare function LONGNAME, call function SHORTNAME with ARGC arguments */
 .macro win2linm longname, shortname, argc
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,5,0)
+	SYM_FUNC_START(\longname)
+#else
 	.type \longname, @function
 	ENTRY(\longname)
+#endif
 
 	/* Create a call frame - it's optional, but good for debugging */
 	.cfi_startproc
@@ -243,7 +248,11 @@ In Linux it should look like:
 	.cfi_restore %rbp
 	ret
 	.cfi_endproc
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,5,0)
+	SYM_FUNC_END(\longname)
+#else
 	.size \longname, (. - \longname)
+#endif
 .endm
 
 #define win2lin(name, argc) win2linm win2lin_ ## name ## _ ## argc, name, argc

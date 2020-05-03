@@ -86,8 +86,12 @@ static inline struct proc_dir_entry *proc_create_data(const char *name,
 
 static int do_proc_make_entry(const char *name, umode_t mode,
 			      struct proc_dir_entry *parent,
-			      struct file_operations *fops, kuid_t uid,
-			      kgid_t gid, struct ndis_device *wnd)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+			      const struct proc_ops *fops,
+#else
+			      struct file_operations *fops,
+#endif
+			      kuid_t uid, kgid_t gid, struct ndis_device *wnd)
 {
 	struct proc_dir_entry *de;
 
@@ -100,6 +104,32 @@ static int do_proc_make_entry(const char *name, umode_t mode,
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+#define PROC_DECLARE_RO(name) \
+	static int proc_##name##_open(struct inode *inode, struct file *file) \
+	{ \
+		return single_open(file, proc_##name##_read, PDE_DATA(inode)); \
+	} \
+	static const struct proc_ops name##_fops = { \
+		.proc_open = proc_##name##_open, \
+		.proc_read = seq_read, \
+		.proc_lseek = seq_lseek, \
+		.proc_release = single_release, \
+	};
+
+#define PROC_DECLARE_RW(name) \
+	static int proc_##name##_open(struct inode *inode, struct file *file) \
+	{ \
+		return single_open(file, proc_##name##_read, PDE_DATA(inode)); \
+	} \
+	static const struct proc_ops name##_fops = { \
+		.proc_open = proc_##name##_open, \
+		.proc_read = seq_read, \
+		.proc_lseek = seq_lseek, \
+		.proc_release = single_release, \
+		.proc_write = proc_##name##_write, \
+	};
+#else
 #define PROC_DECLARE_RO(name) \
 	static int proc_##name##_open(struct inode *inode, struct file *file) \
 	{ \
@@ -126,6 +156,7 @@ static int do_proc_make_entry(const char *name, umode_t mode,
 		.release = single_release, \
 		.write = proc_##name##_write, \
 	};
+#endif
 
 #define proc_make_entry_ro(name, parent, wnd) \
 	do_proc_make_entry(#name, S_IFREG | S_IRUSR | S_IRGRP, parent, \

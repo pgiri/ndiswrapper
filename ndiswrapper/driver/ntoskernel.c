@@ -1761,10 +1761,19 @@ wstdcall void __iomem *WIN_FUNC(MmMapIoSpace,3)
 {
 	void __iomem *virt;
 	ENTER1("cache type: %d", cache);
-	if (cache == MmCached)
+	if (cache == MmCached) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+		virt = ioremap_cache(phys_addr, size);
+#else
 		virt = ioremap(phys_addr, size);
-	else
+#endif
+	} else {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+		virt = ioremap(phys_addr, size);
+#else
 		virt = ioremap_nocache(phys_addr, size);
+#endif
+	}
 	TRACE1("%llx, %zu, %p", phys_addr, size, virt);
 	return virt;
 }
@@ -2550,7 +2559,7 @@ int ntoskernel_init(void)
 			info->task = NULL;
 			info->count = 0;
 #ifdef CONFIG_SMP
-			cpumask_setall(&info->cpus_allowed);
+			cpumask_setall(tsk_cpus_allowed(info));
 #endif
 		}
 	} while (0);

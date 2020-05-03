@@ -457,10 +457,18 @@ static int setup_tx_sg_list(struct ndis_device *wnd, struct sk_buff *skb,
 	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 		sg_element++;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0)
+		sg_element->length = skb_frag_size(frag);
+#else
 		sg_element->length = frag->size;
+#endif
 		sg_element->address =
 			pci_map_page(wnd->wd->pci.pdev, skb_frag_page(frag),
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0)
+				     skb_frag_off(frag), skb_frag_size(frag),
+#else
 				     frag->page_offset, frag->size,
+#endif
 				     PCI_DMA_TODEVICE);
 		TRACE3("%llx, %u", sg_element->address, sg_element->length);
 	}

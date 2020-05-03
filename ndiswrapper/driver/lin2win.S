@@ -14,6 +14,7 @@
  */
 
 #include <linux/linkage.h>
+#include <linux/version.h>
 
 	.text
 
@@ -71,8 +72,12 @@
  * We get (ARGC + 1) arguments.
  */
 .macro lin2win name, argc
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,5,0)
+	SYM_FUNC_START(\name)
+#else
 	.type \name, @function
 	ENTRY(\name)
+#endif
 
 	/* Create a call frame - it's optional, but good for debugging */
 	.cfi_startproc
@@ -125,7 +130,11 @@
 	.cfi_restore %rbp
 	ret
 	.cfi_endproc
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,5,0)
+	SYM_FUNC_END(\name)
+#else
 	.size	\name, (. - \name)
+#endif
 .endm
 
 /* Define lin2winN functions */

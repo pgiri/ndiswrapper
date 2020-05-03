@@ -642,7 +642,11 @@ struct irql_info {
 	int count;
 	struct mutex lock;
 #ifdef CONFIG_SMP
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,3,0)
+	cpumask_t cpus_mask;
+#else
 	cpumask_t cpus_allowed;
+#endif
 #endif
 	struct task_struct *task;
 };
@@ -669,7 +673,7 @@ static inline KIRQL raise_irql(KIRQL newirql)
 	/* TODO: is this enough to pin down to current cpu? */
 #ifdef CONFIG_SMP
 	assert(task_cpu(current) == smp_processor_id());
-	cpumask_copy(&info->cpus_allowed, tsk_cpus_allowed(current));
+	cpumask_copy(tsk_cpus_allowed(info), tsk_cpus_allowed(current));
 	set_cpus_allowed_ptr(current, cpumask_of(smp_processor_id()));
 #endif
 	put_cpu_var(irql_info);
@@ -693,7 +697,7 @@ static inline void lower_irql(KIRQL oldirql)
 	if (--info->count == 0) {
 		info->task = NULL;
 #ifdef CONFIG_SMP
-		set_cpus_allowed_ptr(current, &info->cpus_allowed);
+		set_cpus_allowed_ptr(current, tsk_cpus_allowed(info));
 #endif
 		mutex_unlock(&info->lock);
 	}
