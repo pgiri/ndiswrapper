@@ -1753,6 +1753,17 @@ wstdcall PHYSICAL_ADDRESS WIN_FUNC(MmGetPhysicalAddress,1)
 	return phy;
 }
 
+wstdcall void WIN_FUNC(MmGetSystemRoutineAddress,1)
+    (struct unicode_string name)
+{
+    struct ansi_string ansi;
+    if (RtlUnicodeStringToAnsiString(&ansi, name, TRUE) == STATUS_SUCCESS) {
+        WARNING("STUB: MmGetSystemRoutineAddress: %s", ansi.buf);
+        RtlFreeAnsiString(&ansi);
+    }
+    return 0;
+}
+
 /* Atheros card with pciid 168C:0014 calls this function with 0xf0000
  * and 0xf6ef0 address, and then check for things that seem to be
  * related to ACPI: "_SM_" and "_DMI_". This may be the hack they do
