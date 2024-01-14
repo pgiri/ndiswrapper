@@ -1763,18 +1763,6 @@ wstdcall void WIN_FUNC(MmGetSystemRoutineAddress,1)
     }
 }
 
-wstdcall void WIN_FUNC(IoWMIQueryAllData,0)
-	(void)
-{
-	WARNING("STUB: IoWMIQueryAllData");
-}
-
-wstdcall void WIN_FUNC(IoWMIOpenBlock,0)
-(void)
-{
-	WARNING("STUB: IoWMIOpenBlock");
-}
-
 /* Atheros card with pciid 168C:0014 calls this function with 0xf0000
  * and 0xf6ef0 address, and then check for things that seem to be
  * related to ACPI: "_SM_" and "_DMI_". This may be the hack they do
