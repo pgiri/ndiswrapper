@@ -1757,11 +1757,10 @@ wstdcall void WIN_FUNC(MmGetSystemRoutineAddress,1)
     (struct unicode_string name)
 {
     struct ansi_string ansi;
-    if (RtlUnicodeStringToAnsiString(&ansi, name, TRUE) == STATUS_SUCCESS) {
+    if (RtlUnicodeStringToAnsiString(&ansi, &name, TRUE) == STATUS_SUCCESS) {
         WARNING("STUB: MmGetSystemRoutineAddress: %s", ansi.buf);
         RtlFreeAnsiString(&ansi);
     }
-    return 0;
 }
 
 /* Atheros card with pciid 168C:0014 calls this function with 0xf0000
