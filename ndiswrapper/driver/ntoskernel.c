@@ -19,6 +19,7 @@
 #include "pnp.h"
 #include "loader.h"
 #include "ntoskernel_exports.h"
+#include "nvmalloc.h"
 
 /* MDLs describe a range of virtual address with an array of physical
  * pages right after the header. For different ranges of virtual
@@ -821,7 +822,7 @@ wstdcall void *WIN_FUNC(ExAllocatePoolWithTag,3)
 		addr = kmalloc(size, irql_gfp());
 	else {
 		if (irql_gfp() & GFP_ATOMIC) {
-			addr = __vmalloc(size, GFP_ATOMIC | __GFP_HIGHMEM,
+			addr = nvmalloc(size, GFP_ATOMIC | __GFP_HIGHMEM,
 					 PAGE_KERNEL);
 			TRACE1("%p, %zu", addr, size);
 		} else {
@@ -1643,6 +1644,10 @@ wstdcall NTSTATUS WIN_FUNC(PsTerminateSystemThread,1)
 	} else
 		ERROR("couldn't find thread for task: %p", current);
 
+    #if LINUX_VERSION_CODE > KERNEL_VERSION(5,16,0)
+		#define complete_and_exit kthread_complete_and_exit
+    #endif
+    
 	complete_and_exit(NULL, status);
 	ERROR("oops: %p, %d", thread->task, thread->pid);
 	return STATUS_FAILURE;

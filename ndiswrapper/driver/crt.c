@@ -13,9 +13,15 @@
  *
  */
 
+#include <linux/random.h>
+
 #include "ntoskernel.h"
 #include "crt_exports.h"
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,18,0)
+struct rnd_state rand_state;
+#endif
+    
 #ifdef CONFIG_X86_64
 /* Windows long is 32-bit, so strip single 'l' in integer formats */
 static void strip_l_modifier(char *str)
@@ -467,7 +473,11 @@ noregparm int WIN_FUNC(_win_memcmp,3)
 noregparm void WIN_FUNC(_win_srand,1)
 	(UINT seed)
 {
-	prandom_seed(seed);
+    #if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+		prandom_seed(seed);
+    #else		
+		prandom_seed_state(&rand_state, seed);
+    #endif
 }
 
 noregparm int WIN_FUNC(rand,0)
@@ -476,7 +486,11 @@ noregparm int WIN_FUNC(rand,0)
 	char buf[6];
 	int i, n;
 
-	get_random_bytes(buf, sizeof(buf));
+    #if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+		get_random_bytes(buf, sizeof(buf));
+    #else		
+		prandom_bytes_state(&rand_state, buf, sizeof(buf));
+    #endif
 	for (n = i = 0; i < sizeof(buf); i++)
 		n += buf[i];
 	return n;

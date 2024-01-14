@@ -23,6 +23,10 @@
 #include "pnp.h"
 #include "wrapper.h"
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,16,0)
+	#define PDE_DATA pde_data
+#endif
+
 #define MAX_PROC_STR_LEN 32
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,5,0)

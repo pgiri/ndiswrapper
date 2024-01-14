@@ -28,6 +28,8 @@
 
 #endif
 
+#include "nvmalloc.h"
+
 struct pe_exports {
 	char *dll;
 	char *name;
@@ -414,10 +416,10 @@ static int fix_pe_image(struct pe_image *pe)
 	image_size = pe->opt_hdr->SizeOfImage;
 #ifdef CONFIG_X86_64
 #ifdef PAGE_KERNEL_EXECUTABLE
-	image = __vmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
+	image = nvmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
 			  PAGE_KERNEL_EXECUTABLE);
 #elif defined PAGE_KERNEL_EXEC
-	image = __vmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
+	image = nvmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
 			  PAGE_KERNEL_EXEC);
 #else
 #error x86_64 should have either PAGE_KERNEL_EXECUTABLE or PAGE_KERNEL_EXEC
@@ -427,7 +429,7 @@ static int fix_pe_image(struct pe_image *pe)
 	/* hate to play with kernel macros, but PAGE_KERNEL_EXEC is
 	 * not available to modules! */
 	if (cpu_has_nx)
-		image = __vmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
+		image = nvmalloc(image_size, GFP_KERNEL | __GFP_HIGHMEM,
 				  __pgprot(__PAGE_KERNEL & ~_PAGE_NX));
 	else
 		image = vmalloc(image_size);

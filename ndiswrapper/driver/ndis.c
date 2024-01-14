@@ -22,6 +22,10 @@
 #include <asm/dma.h>
 #include "ndis_exports.h"
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,18,0)
+	#define PCI_DMA_TODEVICE DMA_TO_DEVICE
+#endif
+
 #define MAX_ALLOCATED_NDIS_PACKETS TX_RING_SIZE
 #define MAX_ALLOCATED_NDIS_BUFFERS TX_RING_SIZE
 
@@ -945,22 +949,36 @@ wstdcall NDIS_STATUS WIN_FUNC(NdisMAllocateMapRegisters,5)
 		EXIT2(return NDIS_STATUS_RESOURCES);
 	}
 	if (dmasize == NDIS_DMA_24BITS) {
-		if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(24)) ||
-		    pci_set_consistent_dma_mask(wnd->wd->pci.pdev,
-						DMA_BIT_MASK(24)))
-			WARNING("setting dma mask failed");
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(24)) || pci_set_consistent_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(24)))
+				WARNING("setting dma mask failed");		
+		#else		
+			if (dma_set_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(24)) || dma_set_coherent_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(24)))
+				WARNING("setting dma mask failed");		
+		#endif
 	} else if (dmasize == NDIS_DMA_32BITS) {
 		/* consistent dma is in low 32-bits by default */
-		if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(32)))
-			WARNING("setting dma mask failed");
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(32)))
+				WARNING("setting dma mask failed");
+		#else
+			if (dma_set_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(32)))
+				WARNING("setting dma mask failed");		
+		#endif
 #ifdef CONFIG_X86_64
 	} else if (dmasize == NDIS_DMA_64BITS) {
-		if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(64)) ||
-		    pci_set_consistent_dma_mask(wnd->wd->pci.pdev,
-						DMA_BIT_MASK(64)))
-			WARNING("setting dma mask failed");
-		else
-			wnd->net_dev->features |= NETIF_F_HIGHDMA;
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(64)) || pci_set_consistent_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(64)))
+				WARNING("setting dma mask failed");	
+			else
+				wnd->net_dev->features |= NETIF_F_HIGHDMA;	
+		#else		
+			if (dma_set_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(64)) || dma_set_coherent_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(64)))
+				WARNING("setting dma mask failed");	
+			else
+				wnd->net_dev->features |= NETIF_F_HIGHDMA;	;		
+		#endif
+
 #endif
 	} else {
 		ERROR("dmasize %d not supported", dmasize);
@@ -2290,10 +2308,15 @@ wstdcall void NdisMIndicateReceivePacket(struct ndis_mp_block *nmb,
 			else
 				skb->ip_summed = CHECKSUM_NONE;
 
-			if (in_interrupt())
+			#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+				if (in_interrupt())
+					netif_rx(skb);
+				else
+					netif_rx_ni(skb);
+			#else 
 				netif_rx(skb);
-			else
-				netif_rx_ni(skb);
+			#endif
+
 		} else {
 			WARNING("couldn't allocate skb; packet dropped");
 			atomic_inc_var(wnd->net_stats.rx_dropped);
@@ -2438,10 +2461,14 @@ wstdcall void EthRxIndicateHandler(struct ndis_mp_block *nmb, void *rx_ctx,
 		skb->protocol = eth_type_trans(skb, wnd->net_dev);
 		pre_atomic_add(wnd->net_stats.rx_bytes, skb_size);
 		atomic_inc_var(wnd->net_stats.rx_packets);
-		if (in_interrupt())
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (in_interrupt())
+				netif_rx(skb);
+			else
+				netif_rx_ni(skb);
+		#else 
 			netif_rx(skb);
-		else
-			netif_rx_ni(skb);
+		#endif
 	}
 
 	EXIT3(return);
@@ -2503,10 +2530,14 @@ wstdcall void NdisMTransferDataComplete(struct ndis_mp_block *nmb,
 	else
 		skb->ip_summed = CHECKSUM_NONE;
 
-	if (in_interrupt())
+	#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+		if (in_interrupt())
+			netif_rx(skb);
+		else
+			netif_rx_ni(skb);
+	#else 
 		netif_rx(skb);
-	else
-		netif_rx_ni(skb);
+	#endif
 }
 
 /* called via function pointer */
@@ -2629,10 +2660,13 @@ wstdcall NDIS_STATUS WIN_FUNC(NdisMInitializeScatterGatherDma,3)
 #ifdef CONFIG_X86_64
 	if (!dma64_supported) {
 		TRACE1("64-bit DMA size is not supported");
-		if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(32)) ||
-		    pci_set_consistent_dma_mask(wnd->wd->pci.pdev,
-						DMA_BIT_MASK(32)))
-			WARNING("setting dma mask failed");
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (pci_set_dma_mask(wnd->wd->pci.pdev, DMA_BIT_MASK(32)) || pci_set_consistent_dma_mask(wnd->wd->pci.pdev,	DMA_BIT_MASK(32)))
+				WARNING("setting dma mask failed");
+		#else
+			if (dma_set_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(32)) || dma_set_coherent_mask(&wnd->wd->pci.pdev->dev, DMA_BIT_MASK(32)))
+				WARNING("setting dma mask failed");
+		#endif
 	}
 #endif
 	if ((wnd->attributes & NDIS_ATTRIBUTE_BUS_MASTER) &&
