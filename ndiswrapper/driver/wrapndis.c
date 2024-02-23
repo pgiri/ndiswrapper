@@ -24,6 +24,10 @@
 #include "wrapndis.h"
 #include "wrapper.h"
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,18,0)
+	#define PCI_DMA_TODEVICE DMA_TO_DEVICE
+#endif
+
 /* Functions callable from the NDIS driver */
 wstdcall NTSTATUS NdisDispatchDeviceControl(struct device_object *fdo,
 					    struct irp *irp);
@@ -415,7 +419,7 @@ static int ndis_set_mac_address(struct net_device *dev, void *p)
 			       mac, sizeof(mac));
 		if (res == NDIS_STATUS_SUCCESS) {
 			TRACE1("mac:" MACSTRSEP, MAC2STR(mac));
-			memcpy(dev->dev_addr, mac, sizeof(mac));
+			memcpy((void*)dev->dev_addr, mac, sizeof(mac));
 		} else
 			ERROR("couldn't get mac address: %08X", res);
 	}
@@ -462,8 +466,13 @@ static int setup_tx_sg_list(struct ndis_device *wnd, struct sk_buff *skb,
 #else
 		sg_element->length = frag->size;
 #endif
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
 		sg_element->address =
 			pci_map_page(wnd->wd->pci.pdev, skb_frag_page(frag),
+#else
+		sg_element->address =
+			dma_map_page(&wnd->wd->pci.pdev->dev, skb_frag_page(frag),
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0)
 				     skb_frag_off(frag), skb_frag_size(frag),
 #else
@@ -491,8 +500,11 @@ static void free_tx_sg_list(struct ndis_device *wnd,
 		EXIT3(return);
 	for (i = 1; i < sg_list->nent; i++, sg_element++) {
 		TRACE3("%llx, %u", sg_element->address, sg_element->length);
-		pci_unmap_page(wnd->wd->pci.pdev, sg_element->address,
-			       sg_element->length, PCI_DMA_TODEVICE);
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			pci_unmap_page(wnd->wd->pci.pdev, sg_element->address, sg_element->length, PCI_DMA_TODEVICE);
+		#else
+			dma_unmap_page(&wnd->wd->pci.pdev->dev, sg_element->address, sg_element->length, PCI_DMA_TODEVICE);
+		#endif
 	}
 	TRACE3("%p", sg_list);
 	kfree(sg_list);
@@ -1867,7 +1879,7 @@ static NDIS_STATUS ndis_start_device(struct ndis_device *wnd)
 		}
 	}
 	TRACE1("mac:" MACSTRSEP, MAC2STR(mac));
-	memcpy(net_dev->dev_addr, mac, ETH_ALEN);
+	memcpy((void*)net_dev->dev_addr, mac, ETH_ALEN);
 
 	strncpy(net_dev->name, if_name, IFNAMSIZ - 1);
 	net_dev->name[IFNAMSIZ - 1] = 0;

@@ -61,10 +61,13 @@ static NTSTATUS start_pdo(struct device_object *pdo)
 	/* 64-bit broadcom driver doesn't work if DMA is allocated
 	 * from over 1GB */
 	if (wd->vendor == 0x14e4) {
-		if (pci_set_dma_mask(pdev, DMA_BIT_MASK(30)) ||
-		    pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(30)))
-			WARNING("couldn't set DMA mask; this driver "
-				"may not work with more than 1GB RAM");
+		#if LINUX_VERSION_CODE <= KERNEL_VERSION(5,18,0)
+			if (pci_set_dma_mask(pdev, DMA_BIT_MASK(30)) || pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(30)))
+				WARNING("couldn't set DMA mask; this driver " "may not work with more than 1GB RAM");
+		#else		
+			if (dma_set_mask(&pdev->dev, DMA_BIT_MASK(30)) || dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(30)))
+				WARNING("couldn't set DMA mask; this driver " "may not work with more than 1GB RAM");
+		#endif
 	}
 #endif
 	/* IRQ resource entry is filled in from pdev, instead of

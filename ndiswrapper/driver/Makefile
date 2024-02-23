@@ -2,7 +2,7 @@
 MODNAME = ndiswrapper
 
 DISTFILES = \
-	Makefile crt.c divdi3.c hal.c iw_ndis.c iw_ndis.h lin2win.S lin2win.h \
+	Makefile nvmalloc.c nvmalloc.h crt.c divdi3.c hal.c iw_ndis.c iw_ndis.h lin2win.S lin2win.h \
 	loader.c loader.h longlong.h mkexport.sh mkstubs.sh ndis.c ndis.h \
 	ndiswrapper.h ntoskernel.c ntoskernel.h ntoskernel_io.c pe_linker.c \
 	pe_linker.h pnp.c pnp.h proc.c rtl.c usb.c usb.h win2lin_stubs.S \
@@ -97,12 +97,12 @@ ifdef ALLOC_DEBUG
 EXTRA_CFLAGS += -DALLOC_DEBUG=$(ALLOC_DEBUG)
 endif
 
-OBJS = crt.o hal.o iw_ndis.o loader.o ndis.o ntoskernel.o ntoskernel_io.o \
+OBJS = nvmalloc.o crt.o hal.o iw_ndis.o loader.o ndis.o ntoskernel.o ntoskernel_io.o \
 	pe_linker.o pnp.o proc.o rtl.o wrapmem.o wrapndis.o wrapper.o
 
-EXPORT_SRCS = crt.c hal.c ndis.c ntoskernel.c ntoskernel_io.c rtl.c
+EXPORT_SRCS = nvmalloc.c crt.c hal.c ndis.c ntoskernel.c ntoskernel_io.c rtl.c
 
-STUB_SRCS = crt.c hal.c ndis.c ntoskernel.c ntoskernel_io.c \
+STUB_SRCS = nvmalloc.c crt.c hal.c ndis.c ntoskernel.c ntoskernel_io.c \
 	pnp.c rtl.c wrapndis.c
 
 

@@ -17,6 +17,7 @@
 #include "loader.h"
 #include "wrapndis.h"
 #include "pnp.h"
+#include "nvmalloc.h"
 
 #include <linux/module.h>
 #include <linux/kmod.h>
@@ -149,12 +150,12 @@ static int load_sys_files(struct wrap_driver *driver,
 #ifdef CONFIG_X86_64
 #ifdef PAGE_KERNEL_EXECUTABLE
 		pe_image->image =
-			__vmalloc(load_driver->sys_files[i].size,
+			nvmalloc(load_driver->sys_files[i].size,
 				  GFP_KERNEL | __GFP_HIGHMEM,
 				  PAGE_KERNEL_EXECUTABLE);
 #elif defined PAGE_KERNEL_EXEC
 		pe_image->image =
-			__vmalloc(load_driver->sys_files[i].size,
+			nvmalloc(load_driver->sys_files[i].size,
 				  GFP_KERNEL | __GFP_HIGHMEM,
 				  PAGE_KERNEL_EXEC);
 #else
@@ -166,7 +167,7 @@ static int load_sys_files(struct wrap_driver *driver,
 #ifdef cpu_has_nx
 		if (cpu_has_nx)
 			pe_image->image =
-				__vmalloc(load_driver->sys_files[i].size,
+				nvmalloc(load_driver->sys_files[i].size,
 					  GFP_KERNEL | __GFP_HIGHMEM,
 					  __pgprot(__PAGE_KERNEL & ~_PAGE_NX));
 		else
